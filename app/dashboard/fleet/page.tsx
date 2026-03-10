@@ -56,21 +56,35 @@ export default async function FleetPage() {
             <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">{ac.name}</h3>
             <p className="text-sm text-muted-foreground mb-4">{ac.registration} · {ac.make} {ac.model}</p>
 
-            <div className="grid grid-cols-3 gap-3 text-center">
+            <div className="grid grid-cols-3 gap-2 text-center">
               <div className="bg-muted/30 rounded-lg p-2">
-                <p className="text-xs text-muted-foreground">Airframe</p>
-                <p className="text-sm font-semibold text-foreground">{ac.airframe_hours.toFixed(0)}</p>
+                <p className="text-xs text-muted-foreground">Meter</p>
+                <p className="text-sm font-semibold text-foreground">{(ac.meter_time ?? ac.airframe_hours).toFixed(1)}</p>
                 <p className="text-xs text-muted-foreground">hrs</p>
               </div>
               <div className="bg-muted/30 rounded-lg p-2">
-                <p className="text-xs text-muted-foreground">Engine</p>
-                <p className="text-sm font-semibold text-foreground">{ac.engine1_hours.toFixed(0)}</p>
+                <p className="text-xs text-muted-foreground">Eng #1</p>
+                <p className="text-sm font-semibold text-foreground">{ac.engine1_hours.toFixed(1)}</p>
                 <p className="text-xs text-muted-foreground">hrs</p>
               </div>
               <div className="bg-muted/30 rounded-lg p-2">
-                <p className="text-xs text-muted-foreground">Cycles</p>
-                <p className="text-sm font-semibold text-foreground">{ac.total_cycles}</p>
-                <p className="text-xs text-muted-foreground">ldgs</p>
+                <p className="text-xs text-muted-foreground">Eng #2</p>
+                <p className="text-sm font-semibold text-foreground">{(ac.engine2_hours ?? 0).toFixed(1)}</p>
+                <p className="text-xs text-muted-foreground">hrs</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-center mt-2">
+              <div className="bg-muted/30 rounded-lg p-2">
+                <p className="text-xs text-muted-foreground">Cyc #1</p>
+                <p className="text-sm font-semibold text-foreground">{(ac.engine1_cycles ?? ac.total_cycles ?? 0).toLocaleString()}</p>
+              </div>
+              <div className="bg-muted/30 rounded-lg p-2">
+                <p className="text-xs text-muted-foreground">Cyc #2</p>
+                <p className="text-sm font-semibold text-foreground">{(ac.engine2_cycles ?? 0).toLocaleString()}</p>
+              </div>
+              <div className="bg-muted/30 rounded-lg p-2">
+                <p className="text-xs text-muted-foreground">Landings</p>
+                <p className="text-sm font-semibold text-foreground">{(ac.total_landings ?? 0).toLocaleString()}</p>
               </div>
             </div>
 
