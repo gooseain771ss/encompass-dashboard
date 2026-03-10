@@ -17,10 +17,11 @@ import {
   Menu,
   X,
   ChevronRight,
+  Home,
 } from 'lucide-react'
 import { useState } from 'react'
 
-const navItems = [
+const businessNavItems = [
   {
     href: '/dashboard',
     label: 'Overview',
@@ -52,6 +53,17 @@ const navItems = [
     icon: Mail,
   },
 ]
+
+const personalNavItems = [
+  {
+    href: '/dashboard/personal',
+    label: 'Personal Finance',
+    icon: Home,
+  },
+]
+
+// Keep backward-compat alias
+const navItems = businessNavItems
 
 export function Sidebar() {
   const pathname = usePathname()
@@ -85,7 +97,30 @@ export function Sidebar() {
 
       {/* Nav items */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-        {navItems.map(item => {
+        {/* Business section */}
+        <p className="px-3 pb-1 pt-0.5 text-xs font-semibold text-muted-foreground/60 uppercase tracking-widest">Business</p>
+        {businessNavItems.map(item => {
+          const active = isActive(item.href)
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={() => setMobileOpen(false)}
+              className={cn('nav-item', active ? 'nav-item-active' : 'nav-item-inactive')}
+            >
+              <item.icon className={cn('w-4 h-4 shrink-0', active ? 'text-primary' : '')} />
+              <span className="flex-1">{item.label}</span>
+              {active && <ChevronRight className="w-3.5 h-3.5 text-primary/50" />}
+            </Link>
+          )
+        })}
+
+        {/* Personal section divider */}
+        <div className="pt-3 pb-1">
+          <div className="border-t border-border/50 mb-3" />
+          <p className="px-3 pb-1 text-xs font-semibold text-muted-foreground/60 uppercase tracking-widest">Personal</p>
+        </div>
+        {personalNavItems.map(item => {
           const active = isActive(item.href)
           return (
             <Link
