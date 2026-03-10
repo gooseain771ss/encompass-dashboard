@@ -1,10 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import { DollarSign, TrendingUp, TrendingDown, Upload, Plus, Download } from 'lucide-react'
+import { DollarSign, TrendingUp, TrendingDown, Upload, Plus, Download, ClipboardCheck } from 'lucide-react'
 import { AddTransactionForm } from '@/components/finance/AddTransactionForm'
 import { ReceiptUpload } from '@/components/finance/ReceiptUpload'
 import { ExportCSV } from '@/components/finance/ExportCSV'
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns'
+import Link from 'next/link'
 
 interface SearchParams {
   from?: string
@@ -33,9 +34,10 @@ export default async function FinancePage({ searchParams }: { searchParams: Sear
     query = query.eq('aircraft_id', searchParams.aircraft)
   }
 
-  const [{ data: transactions }, { data: aircraft }] = await Promise.all([
+  const [{ data: transactions }, { data: aircraft }, { count: queueCount }] = await Promise.all([
     query.limit(200),
     supabase.from('aircraft').select('id, name').order('name'),
+    supabase.from('transactions').select('id', { count: 'exact', head: true }).eq('needs_review', true),
   ])
 
   // Calculate P&L
@@ -66,6 +68,18 @@ export default async function FinancePage({ searchParams }: { searchParams: Sear
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <Link
+            href="/dashboard/finance/queue"
+            className="btn-secondary flex items-center gap-1.5 relative"
+          >
+            <ClipboardCheck className="w-4 h-4" />
+            Review Queue
+            {queueCount != null && queueCount > 0 && (
+              <span className="absolute -top-1.5 -right-1.5 bg-primary text-primary-foreground text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                {queueCount > 99 ? '99+' : queueCount}
+              </span>
+            )}
+          </Link>
           <ExportCSV transactions={transactions || []} fromDate={fromDate} toDate={toDate} />
           <AddTransactionForm aircraft={aircraft || []} />
         </div>
