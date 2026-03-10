@@ -22,7 +22,7 @@ export default async function FinancePage({ searchParams }: { searchParams: Sear
 
   let query = supabase
     .from('transactions')
-    .select('*, aircraft(name, registration), quote(quote_number, origin_icao, destination_icao)')
+    .select('*, aircraft(name, registration), quotes(quote_number, origin_icao, destination_icao)')
     .gte('transaction_date', fromDate)
     .lte('transaction_date', toDate)
     .order('transaction_date', { ascending: false })
