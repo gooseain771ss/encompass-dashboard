@@ -23,7 +23,7 @@ export default async function PersonalNetWorthPage() {
   const assets = accounts?.filter(a => a.is_asset) || []
   const liabilities = accounts?.filter(a => a.is_liability) || []
   const totalAssets = assets.reduce((s, a) => s + (a.balance || 0), 0)
-  const totalLiabilities = liabilities.reduce((s, a) => s + (a.balance || 0), 0)
+  const totalLiabilities = liabilities.reduce((s, a) => s + Math.abs(a.balance || 0), 0)
   const liveNetWorth = totalAssets - totalLiabilities
 
   // Group assets by type

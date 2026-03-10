@@ -46,7 +46,7 @@ export default async function PersonalAccountsPage() {
   const liabilities = accounts?.filter(a => a.is_liability) || []
 
   const totalAssets = assets.reduce((s, a) => s + (a.balance || 0), 0)
-  const totalLiabilities = liabilities.reduce((s, a) => s + (a.balance || 0), 0)
+  const totalLiabilities = liabilities.reduce((s, a) => s + Math.abs(a.balance || 0), 0)
   const netWorth = totalAssets - totalLiabilities
 
   return (

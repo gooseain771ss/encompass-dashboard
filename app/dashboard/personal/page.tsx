@@ -56,7 +56,7 @@ export default async function PersonalOverviewPage() {
 
   // Compute live net worth from accounts
   const totalAssets = accounts?.filter(a => a.is_asset).reduce((s, a) => s + (a.balance || 0), 0) || 0
-  const totalLiabilities = accounts?.filter(a => a.is_liability).reduce((s, a) => s + (a.balance || 0), 0) || 0
+  const totalLiabilities = accounts?.filter(a => a.is_liability).reduce((s, a) => s + Math.abs(a.balance || 0), 0) || 0
   const netWorth = totalAssets - totalLiabilities
 
   // Budget progress
