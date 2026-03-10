@@ -1,0 +1,117 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 222 47% 8%;
+    --foreground: 210 40% 95%;
+
+    --card: 222 47% 10%;
+    --card-foreground: 210 40% 95%;
+
+    --popover: 222 47% 10%;
+    --popover-foreground: 210 40% 95%;
+
+    --primary: 38 92% 50%;
+    --primary-foreground: 222 47% 8%;
+
+    --secondary: 222 47% 14%;
+    --secondary-foreground: 210 40% 95%;
+
+    --muted: 222 47% 14%;
+    --muted-foreground: 215 20% 55%;
+
+    --accent: 38 92% 50%;
+    --accent-foreground: 222 47% 8%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 40% 95%;
+
+    --border: 222 47% 18%;
+    --input: 222 47% 16%;
+    --ring: 38 92% 50%;
+
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-background;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground;
+  }
+}
+
+@layer components {
+  .stat-card {
+    @apply bg-card border border-border rounded-xl p-5 flex flex-col gap-2;
+  }
+  
+  .section-header {
+    @apply text-lg font-semibold text-foreground;
+  }
+
+  .badge-status {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .table-row-hover {
+    @apply hover:bg-muted/30 transition-colors;
+  }
+
+  .nav-item {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150;
+  }
+
+  .nav-item-active {
+    @apply bg-primary/10 text-primary border border-primary/20;
+  }
+
+  .nav-item-inactive {
+    @apply text-muted-foreground hover:bg-muted/50 hover:text-foreground;
+  }
+
+  .form-label {
+    @apply text-sm font-medium text-muted-foreground;
+  }
+
+  .input-base {
+    @apply w-full bg-input border border-border rounded-lg px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border px-4 py-2 rounded-lg text-sm font-medium transition-all duration-150;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 text-muted-foreground hover:text-foreground hover:bg-muted/50 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150;
+  }
+
+  .btn-destructive {
+    @apply inline-flex items-center gap-2 bg-destructive/10 text-destructive hover:bg-destructive hover:text-white border border-destructive/30 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-150;
+  }
+}
