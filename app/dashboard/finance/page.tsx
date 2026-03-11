@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import { DollarSign, TrendingUp, TrendingDown, Upload, Plus, Download, ClipboardCheck } from 'lucide-react'
+import { DollarSign, TrendingUp, TrendingDown, Upload, Plus, Download, ClipboardCheck, FileText } from 'lucide-react'
 import { AddTransactionForm } from '@/components/finance/AddTransactionForm'
 import { ReceiptUpload } from '@/components/finance/ReceiptUpload'
 import { ExportCSV } from '@/components/finance/ExportCSV'
@@ -53,9 +53,10 @@ export default async function FinancePage({ searchParams }: { searchParams: Sear
   const sortedCategories = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1])
 
   const categoryLabels: Record<string, string> = {
-    fuel: 'Fuel', maintenance: 'Maintenance', crew: 'Crew', landing_fees: 'Landing Fees',
-    catering: 'Catering', insurance: 'Insurance', hangar: 'Hangar', navigation: 'Navigation',
-    ground_transport: 'Ground Transport', other: 'Other',
+    fuel: 'Fuel', fuel_surcharge: 'Fuel Surcharge', maintenance: 'Maintenance',
+    crew: 'Crew / Lodging', fbo_fees: 'FBO Fees', meals: 'Meals',
+    catering: 'Catering', insurance: 'Insurance', hangar: 'Hangar',
+    navigation: 'Navigation', ground_transport: 'Ground Transport', other: 'Other',
   }
 
   return (
@@ -79,6 +80,10 @@ export default async function FinancePage({ searchParams }: { searchParams: Sear
                 {queueCount > 99 ? '99+' : queueCount}
               </span>
             )}
+          </Link>
+          <Link href="/dashboard/finance/invoices" className="btn-secondary flex items-center gap-1.5">
+            <FileText className="w-4 h-4" />
+            Invoices
           </Link>
           <ExportCSV transactions={transactions || []} fromDate={fromDate} toDate={toDate} />
           <AddTransactionForm aircraft={aircraft || []} />
