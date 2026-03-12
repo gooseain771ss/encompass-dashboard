@@ -13,6 +13,7 @@ const ACCOUNT_TYPES = [
   { value: 'property',           label: 'Property (Personal Assets)' },
   { value: 'vehicle',            label: 'Vehicle (Personal Assets)' },
   { value: 'other',              label: 'Other (Personal Assets)' },
+  { value: 'insurance',          label: 'Insurance Policy (Insurance)' },
   { value: 'credit_card',        label: 'Credit Card (Liabilities)' },
   { value: 'mortgage',           label: 'Mortgage (Liabilities)' },
   { value: 'loan',               label: 'Loan (Liabilities)' },

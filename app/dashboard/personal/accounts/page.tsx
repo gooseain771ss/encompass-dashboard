@@ -8,13 +8,14 @@ const DISPLAY_GROUPS = {
   investments: { types: ['investment'], label: 'INVESTMENTS', color: 'emerald' as const },
   private_investments: { types: ['private_investment'], label: 'PRIVATE INVESTMENTS', color: 'violet' as const },
   personal_assets: { types: ['property', 'vehicle', 'other'], label: 'PERSONAL ASSETS', color: 'amber' as const },
+  insurance: { types: ['insurance'], label: 'INSURANCE', color: 'sky' as const },
   liabilities: { types: ['credit_card', 'mortgage', 'loan'], label: 'LIABILITIES', color: 'red' as const },
 } as const
 
 type GroupKey = keyof typeof DISPLAY_GROUPS
-type GroupColor = 'blue' | 'emerald' | 'violet' | 'amber' | 'red'
+type GroupColor = 'blue' | 'emerald' | 'violet' | 'amber' | 'sky' | 'red'
 
-const ASSET_GROUPS: GroupKey[] = ['bank', 'investments', 'private_investments', 'personal_assets']
+const ASSET_GROUPS: GroupKey[] = ['bank', 'investments', 'private_investments', 'personal_assets', 'insurance']
 const LIABILITY_GROUPS: GroupKey[] = ['liabilities']
 
 const COLOR_CLASSES: Record<GroupColor, { border: string; text: string; bg: string }> = {
@@ -22,6 +23,7 @@ const COLOR_CLASSES: Record<GroupColor, { border: string; text: string; bg: stri
   emerald: { border: 'border-emerald-600', text: 'text-emerald-400', bg: 'bg-emerald-900/20' },
   violet:  { border: 'border-violet-600',  text: 'text-violet-400',  bg: 'bg-violet-900/20' },
   amber:   { border: 'border-amber-600',   text: 'text-amber-400',   bg: 'bg-amber-900/20' },
+  sky:     { border: 'border-sky-600',     text: 'text-sky-400',     bg: 'bg-sky-900/20' },
   red:     { border: 'border-red-600',     text: 'text-red-400',     bg: 'bg-red-900/20' },
 }
 
@@ -59,6 +61,7 @@ export default async function PersonalAccountsPage() {
     investments: [],
     private_investments: [],
     personal_assets: [],
+    insurance: [],
     liabilities: [],
   }
 
