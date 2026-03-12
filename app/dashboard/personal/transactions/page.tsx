@@ -4,6 +4,7 @@ import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { AlertCircle, CreditCard, TrendingUp } from 'lucide-react'
 import { AddPersonalTransactionForm } from '@/components/personal/AddPersonalTransactionForm'
 import { CSVImport } from '@/components/personal/CSVImport'
+import { AmazonImport } from '@/components/personal/AmazonImport'
 import Link from 'next/link'
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES } from '@/components/personal/categories'
 
@@ -61,6 +62,7 @@ export default async function PersonalTransactionsPage({ searchParams }: { searc
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
+          <AmazonImport accounts={accounts || []} />
           <CSVImport accounts={accounts || []} />
           <AddPersonalTransactionForm accounts={accounts || []} />
         </div>

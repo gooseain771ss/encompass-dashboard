@@ -3,8 +3,17 @@
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Upload, X, Check, AlertCircle } from 'lucide-react'
+import { Upload, X, Check, AlertCircle, Info, ChevronDown, ChevronUp } from 'lucide-react'
 import { guessCategoryFromMerchant, EXPENSE_CATEGORIES, getCategoryDef } from './categories'
+
+function isAmazonTransaction(description: string): boolean {
+  const lower = description.toLowerCase()
+  const isAmazon = lower.includes('amazon') || lower.includes('amzn')
+  if (!isAmazon) return false
+  // Keep Prime membership charges — they won't appear in order history CSVs
+  const isPrime = lower.includes('prime')
+  return !isPrime
+}
 
 interface Account {
   id: string
@@ -84,8 +93,12 @@ export function CSVImport({ accounts }: Props) {
   const [open, setOpen] = useState(false)
   const [step, setStep] = useState<'upload' | 'preview' | 'done'>('upload')
   const [rows, setRows] = useState<ParsedRow[]>([])
+  const [skippedAmazonRows, setSkippedAmazonRows] = useState<ParsedRow[]>([])
+  const [showSkipped, setShowSkipped] = useState(false)
+  const [amazonBannerDismissed, setAmazonBannerDismissed] = useState(false)
   const [selectedAccount, setSelectedAccount] = useState('')
   const [saving, setSaving] = useState(false)
+  const [importedCount, setImportedCount] = useState(0)
   const [error, setError] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
@@ -109,6 +122,8 @@ export function CSVImport({ accounts }: Props) {
       }
 
       const parsed: ParsedRow[] = []
+      const skipped: ParsedRow[] = []
+
       for (let i = 1; i < allRows.length; i++) {
         const row = allRows[i]
         if (row.length < 2) continue
@@ -122,7 +137,6 @@ export function CSVImport({ accounts }: Props) {
         let isIncome = false
 
         if (creditIdx !== -1 && debitIdx !== -1) {
-          // Separate credit/debit columns
           const credit = parseFloat((row[creditIdx] || '0').replace(/[$,()]/g, '')) || 0
           const debit = parseFloat((row[debitIdx] || '0').replace(/[$,()]/g, '')) || 0
           if (credit > 0) { amount = credit; isIncome = true }
@@ -130,7 +144,6 @@ export function CSVImport({ accounts }: Props) {
         } else if (amountIdx !== -1) {
           const raw = (row[amountIdx] || '0').replace(/[$,]/g, '')
           amount = parseFloat(raw) || 0
-          // negative = expense in most bank formats
           isIncome = amount > 0
           if (!isIncome) amount = -Math.abs(amount)
           else amount = Math.abs(amount)
@@ -138,7 +151,7 @@ export function CSVImport({ accounts }: Props) {
 
         const { category, subcategory, confidence } = guessCategoryFromMerchant(rawDesc)
 
-        parsed.push({
+        const parsedRow: ParsedRow = {
           date,
           description: rawDesc,
           merchant: rawDesc,
@@ -148,15 +161,25 @@ export function CSVImport({ accounts }: Props) {
           subcategory: subcategory || '',
           confidence,
           selected: true,
-        })
+        }
+
+        // Route non-Prime Amazon charges to the skipped bucket
+        if (isAmazonTransaction(rawDesc)) {
+          skipped.push({ ...parsedRow, selected: false })
+        } else {
+          parsed.push(parsedRow)
+        }
       }
 
-      if (parsed.length === 0) {
+      if (parsed.length === 0 && skipped.length === 0) {
         setError('No valid transactions found in CSV.')
         return
       }
 
       setRows(parsed)
+      setSkippedAmazonRows(skipped)
+      setShowSkipped(false)
+      setAmazonBannerDismissed(false)
       setStep('preview')
       setError('')
     }
@@ -174,6 +197,13 @@ export function CSVImport({ accounts }: Props) {
       if (field === 'category') updated.subcategory = ''
       return updated
     }))
+  }
+
+  /** Move a skipped Amazon row back into the main import list */
+  function includeSkippedRow(skippedIdx: number) {
+    const row = skippedAmazonRows[skippedIdx]
+    setRows(prev => [...prev, { ...row, selected: true }])
+    setSkippedAmazonRows(prev => prev.filter((_, i) => i !== skippedIdx))
   }
 
   async function handleImport() {
@@ -196,6 +226,7 @@ export function CSVImport({ accounts }: Props) {
     const { error } = await supabase.from('personal_transactions').insert(inserts)
     setSaving(false)
     if (!error) {
+      setImportedCount(selected.length)
       setStep('done')
       router.refresh()
     } else {
@@ -206,10 +237,16 @@ export function CSVImport({ accounts }: Props) {
   function reset() {
     setStep('upload')
     setRows([])
+    setSkippedAmazonRows([])
+    setShowSkipped(false)
+    setAmazonBannerDismissed(false)
     setError('')
+    setImportedCount(0)
     if (fileRef.current) fileRef.current.value = ''
     setOpen(false)
   }
+
+  const selectedRows = rows.filter(r => r.selected)
 
   return (
     <>
@@ -261,7 +298,7 @@ export function CSVImport({ accounts }: Props) {
                   <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
                     <div>
                       <p className="text-sm text-foreground font-medium">{rows.length} transactions detected</p>
-                      <p className="text-xs text-muted-foreground">{rows.filter(r => r.selected).length} selected for import. Review categories and adjust as needed.</p>
+                      <p className="text-xs text-muted-foreground">{selectedRows.length} selected for import. Review categories and adjust as needed.</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <div>
@@ -284,6 +321,56 @@ export function CSVImport({ accounts }: Props) {
                     <div className="flex items-center gap-2 text-red-400 text-sm bg-red-900/20 border border-red-800/30 rounded-lg px-4 py-2 mb-3">
                       <AlertCircle className="w-4 h-4 shrink-0" />
                       {error}
+                    </div>
+                  )}
+
+                  {/* Amazon skip banner */}
+                  {skippedAmazonRows.length > 0 && !amazonBannerDismissed && (
+                    <div className="mb-3 rounded-xl border border-blue-800/30 bg-blue-900/10">
+                      <div className="flex items-start gap-2.5 px-4 py-3">
+                        <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+                        <p className="text-xs text-blue-300 flex-1">
+                          <strong>{skippedAmazonRows.length}</strong> Amazon transaction{skippedAmazonRows.length !== 1 ? 's were' : ' was'} automatically skipped to avoid duplicating your Amazon order imports.
+                        </p>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            onClick={() => setShowSkipped(v => !v)}
+                            className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1"
+                          >
+                            {showSkipped ? 'Hide' : 'Show skipped'}
+                            {showSkipped ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                          </button>
+                          <button
+                            onClick={() => setAmazonBannerDismissed(true)}
+                            className="text-muted-foreground hover:text-foreground"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {showSkipped && (
+                        <div className="border-t border-blue-800/20 px-4 py-3">
+                          <p className="text-xs text-muted-foreground mb-2">
+                            These rows matched "amazon" or "amzn" in the description. Use "Include anyway" if you haven&apos;t imported Amazon order history separately.
+                          </p>
+                          <div className="space-y-1.5">
+                            {skippedAmazonRows.map((row, si) => (
+                              <div key={si} className="flex items-center justify-between gap-3 text-xs bg-muted/10 rounded-lg px-3 py-2">
+                                <span className="text-muted-foreground whitespace-nowrap">{row.date}</span>
+                                <span className="text-foreground flex-1 truncate">{row.description}</span>
+                                <span className="text-red-400 whitespace-nowrap font-medium">${row.amount.toFixed(2)}</span>
+                                <button
+                                  onClick={() => includeSkippedRow(si)}
+                                  className="text-xs text-blue-400 hover:text-blue-300 whitespace-nowrap border border-blue-800/40 rounded px-2 py-0.5"
+                                >
+                                  Include anyway
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -354,6 +441,13 @@ export function CSVImport({ accounts }: Props) {
                             </tr>
                           )
                         })}
+                        {rows.length === 0 && (
+                          <tr>
+                            <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground text-xs">
+                              All transactions were Amazon charges and were skipped. Use "Include anyway" above if needed.
+                            </td>
+                          </tr>
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -368,7 +462,7 @@ export function CSVImport({ accounts }: Props) {
                   </div>
                   <h3 className="text-xl font-semibold text-foreground">Import Complete!</h3>
                   <p className="text-muted-foreground text-sm">
-                    {rows.filter(r => r.selected).length} transactions imported successfully.
+                    {importedCount} transaction{importedCount !== 1 ? 's' : ''} imported successfully.
                     {rows.filter(r => r.selected && r.confidence < 0.5).length > 0 && (
                       <span className="block mt-1 text-amber-400">
                         {rows.filter(r => r.selected && r.confidence < 0.5).length} transactions were flagged for review.
@@ -387,10 +481,10 @@ export function CSVImport({ accounts }: Props) {
               {step === 'preview' && (
                 <button
                   onClick={handleImport}
-                  disabled={saving || rows.filter(r => r.selected).length === 0}
+                  disabled={saving || selectedRows.length === 0}
                   className="btn-primary"
                 >
-                  {saving ? 'Importing…' : `Import ${rows.filter(r => r.selected).length} Transactions`}
+                  {saving ? 'Importing…' : `Import ${selectedRows.length} Transaction${selectedRows.length !== 1 ? 's' : ''}`}
                 </button>
               )}
             </div>
