@@ -202,7 +202,7 @@ export function AmazonImport({ accounts }: Props) {
       source: 'amazon_import',
       needs_review: r.confidence < 0.6,
       confidence_score: r.confidence,
-      reference_number: r.orderId || null,
+      notes: r.orderId ? `Amazon Order ID: ${r.orderId}` : null,
       account_id: selectedAccount || null,
     }))
 
