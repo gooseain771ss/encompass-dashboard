@@ -54,7 +54,7 @@ export default async function PersonalTransactionsPage({ searchParams }: { searc
           <p className="text-muted-foreground text-sm mt-0.5">
             {format(new Date(fromDate + 'T12:00:00'), 'MMM d')} – {format(new Date(toDate + 'T12:00:00'), 'MMM d, yyyy')}
             {(reviewCount ?? 0) > 0 && (
-              <Link href="?review=1" className="ml-3 text-amber-400 hover:underline">
+              <Link href="/dashboard/personal/review" className="ml-3 text-amber-400 hover:underline">
                 <AlertCircle className="w-3.5 h-3.5 inline mr-1" />
                 {reviewCount} need review
               </Link>

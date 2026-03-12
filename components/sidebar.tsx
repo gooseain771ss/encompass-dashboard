@@ -18,8 +18,10 @@ import {
   X,
   ChevronRight,
   Home,
+  ClipboardCheck,
+  BarChart2,
 } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 const businessNavItems = [
   {
@@ -60,6 +62,11 @@ const personalNavItems = [
     label: 'Personal Finance',
     icon: Home,
   },
+  {
+    href: '/dashboard/personal/spending',
+    label: 'Spending',
+    icon: BarChart2,
+  },
 ]
 
 // Keep backward-compat alias
@@ -69,7 +76,16 @@ export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [reviewCount, setReviewCount] = useState<number>(0)
   const supabase = createClient()
+
+  useEffect(() => {
+    supabase
+      .from('personal_transactions')
+      .select('id', { count: 'exact', head: true })
+      .eq('needs_review', true)
+      .then(({ count }) => setReviewCount(count ?? 0))
+  }, [pathname])
 
   async function handleSignOut() {
     await supabase.auth.signOut()
@@ -135,6 +151,26 @@ export function Sidebar() {
             </Link>
           )
         })}
+        {/* Review Queue with badge */}
+        {(() => {
+          const active = isActive('/dashboard/personal/review')
+          return (
+            <Link
+              href="/dashboard/personal/review"
+              onClick={() => setMobileOpen(false)}
+              className={cn('nav-item', active ? 'nav-item-active' : 'nav-item-inactive')}
+            >
+              <ClipboardCheck className={cn('w-4 h-4 shrink-0', active ? 'text-primary' : '')} />
+              <span className="flex-1">Review Queue</span>
+              {reviewCount > 0 && (
+                <span className="text-xs bg-amber-900/50 text-amber-300 border border-amber-800/40 px-1.5 py-0.5 rounded-full leading-none">
+                  {reviewCount}
+                </span>
+              )}
+              {active && reviewCount === 0 && <ChevronRight className="w-3.5 h-3.5 text-primary/50" />}
+            </Link>
+          )
+        })()}
       </nav>
 
       {/* Bottom section */}
