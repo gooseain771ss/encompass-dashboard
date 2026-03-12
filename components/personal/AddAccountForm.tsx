@@ -6,15 +6,16 @@ import { createClient } from '@/lib/supabase/client'
 import { Plus, X } from 'lucide-react'
 
 const ACCOUNT_TYPES = [
-  { value: 'checking', label: 'Checking' },
-  { value: 'savings', label: 'Savings' },
-  { value: 'credit_card', label: 'Credit Card' },
-  { value: 'investment', label: 'Investment' },
-  { value: 'mortgage', label: 'Mortgage' },
-  { value: 'loan', label: 'Loan' },
-  { value: 'property', label: 'Property' },
-  { value: 'vehicle', label: 'Vehicle' },
-  { value: 'other', label: 'Other' },
+  { value: 'checking',           label: 'Checking (Bank)' },
+  { value: 'savings',            label: 'Savings (Bank)' },
+  { value: 'investment',         label: 'Investment (Investments)' },
+  { value: 'private_investment', label: 'Private Investment (Private Investments)' },
+  { value: 'property',           label: 'Property (Personal Assets)' },
+  { value: 'vehicle',            label: 'Vehicle (Personal Assets)' },
+  { value: 'other',              label: 'Other (Personal Assets)' },
+  { value: 'credit_card',        label: 'Credit Card (Liabilities)' },
+  { value: 'mortgage',           label: 'Mortgage (Liabilities)' },
+  { value: 'loan',               label: 'Loan (Liabilities)' },
 ]
 
 const LIABILITY_TYPES = new Set(['credit_card', 'mortgage', 'loan'])
