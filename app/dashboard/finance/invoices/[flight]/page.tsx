@@ -25,7 +25,7 @@ export default async function FlightInvoicePrintPage({
   searchParams,
 }: {
   params: { flight: string }
-  searchParams: { billTo?: string; billToAddress?: string; type?: string }
+  searchParams: { billTo?: string; billToAddress?: string }
 }) {
   const supabase = createClient()
   const flightNumber = params.flight
@@ -53,6 +53,8 @@ export default async function FlightInvoicePrintPage({
       category: categoryLabels[t.category] || t.category,
       notes: t.notes?.replace(/\[flight:\w+\]\s*/, '') || '',
       amount: Math.abs(t.amount),
+      receiptUrl: t.receipt_url || null,
+      receiptStoragePath: t.receipt_storage_path || null,
     }))
 
   const invoiceBLines = transactions
@@ -64,6 +66,8 @@ export default async function FlightInvoicePrintPage({
       category: categoryLabels[t.category] || t.category,
       notes: t.notes?.replace(/\[flight:\w+\]\s*/, '') || '',
       amount: Math.abs(t.amount),
+      receiptUrl: t.receipt_url || null,
+      receiptStoragePath: t.receipt_storage_path || null,
     }))
 
   const invoiceData = {
