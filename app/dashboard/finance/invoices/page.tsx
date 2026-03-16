@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import { FileText, ChevronRight, Fuel, ReceiptText } from 'lucide-react'
+import { FileText, ChevronRight, Fuel, ReceiptText, Printer } from 'lucide-react'
 import Link from 'next/link'
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns'
 
@@ -172,20 +172,30 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Sea
                 transactions={selectedFlight.transactions!.filter(t => INVOICE_B_CATEGORIES.includes(t.category))}
               />
 
-              {/* Grand total */}
+              {/* Grand total + print button */}
               {(() => {
                 const all = selectedFlight.transactions!
                 const invA = all.filter(t => INVOICE_A_CATEGORIES.includes(t.category)).reduce((s, t) => s + Math.abs(t.amount), 0)
                 const invB = all.filter(t => INVOICE_B_CATEGORIES.includes(t.category)).reduce((s, t) => s + Math.abs(t.amount), 0)
                 return (
-                  <div className="bg-card border border-border rounded-xl px-5 py-4 flex items-center justify-between">
+                  <div className="bg-card border border-border rounded-xl px-5 py-4 flex items-center justify-between gap-4 flex-wrap">
                     <div>
                       <p className="text-sm font-semibold text-foreground">Flight #{selectedFlight.flightNumber} Total</p>
                       <p className="text-xs text-muted-foreground mt-0.5">Invoice A + Invoice B</p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-2xl font-bold text-primary">{formatCurrency(invA + invB)}</p>
-                      <p className="text-xs text-muted-foreground">{all.length} line items</p>
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <p className="text-2xl font-bold text-primary">{formatCurrency(invA + invB)}</p>
+                        <p className="text-xs text-muted-foreground">{all.length} line items</p>
+                      </div>
+                      <Link
+                        href={`/dashboard/finance/invoices/${selectedFlight.flightNumber}`}
+                        target="_blank"
+                        className="btn-primary flex items-center gap-2 shrink-0"
+                      >
+                        <Printer className="w-4 h-4" />
+                        Print / PDF
+                      </Link>
                     </div>
                   </div>
                 )
