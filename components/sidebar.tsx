@@ -20,6 +20,7 @@ import {
   Home,
   ClipboardCheck,
   BarChart2,
+  BookOpen,
 } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
@@ -53,6 +54,11 @@ const businessNavItems = [
     href: '/dashboard/avinode',
     label: 'Avinode Intelligence',
     icon: Mail,
+  },
+  {
+    href: '/dashboard/manifests',
+    label: 'Manifests',
+    icon: BookOpen,
   },
 ]
 
