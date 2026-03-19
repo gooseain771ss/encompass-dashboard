@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronDown, ChevronRight, Plane, Clock, Fuel, User, Calendar } from 'lucide-react'
+import { ChevronDown, ChevronRight, Plane, Clock, Fuel, User, Calendar, FileText } from 'lucide-react'
+import Link from 'next/link'
 import { cn } from '@/lib/utils'
 
 interface Leg {
@@ -103,6 +104,16 @@ function ManifestRow({ m }: { m: Manifest }) {
             </span>
           )}
         </div>
+
+        <Link
+          href={`/dashboard/manifests/${m.id}`}
+          onClick={e => e.stopPropagation()}
+          className="no-print shrink-0 flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground border border-border hover:border-foreground/30 rounded-md px-2 py-1 transition-colors"
+          title="View formatted manifest"
+        >
+          <FileText className="w-3.5 h-3.5" />
+          View
+        </Link>
 
         <div className="text-muted-foreground shrink-0">
           {open ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
