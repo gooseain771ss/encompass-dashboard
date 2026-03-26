@@ -47,28 +47,78 @@ function fmtShort(d: string) {
   })
 }
 
-// Extracts just the company name (+ short location code if present) from a
-// verbose description string. Examples:
-//   "Signature Aviation – SAV – Infrastructure Fee..." → "Signature Aviation – SAV"
-//   "Chick-fil-A Coastland Center – Dinner w/Ed – ..." → "Chick-fil-A Coastland Center"
-//   "Uber – CCO to Home – Rideshare..." → "Uber – CCO to Home"
-//   "Pilot Pay – Scott Nussbaum – Daily rate 3 days" → "Pilot Pay – Scott Nussbaum"
+// ─── Product/Service: company name + short location identifier ───────────────
+// "Signature Aviation – SAV – Infrastructure Fee..." → "Signature Aviation – SAV"
+// "Chick-fil-A Coastland Center – Dinner w/Ed – ..." → "Chick-fil-A Coastland Center"
+// "GPU Service - Newnan-Coweta County Airport FBO"  → "Newnan-Coweta County Airport"
+// "Uber – CCO to Home – Rideshare..."               → "Uber – CCO to Home"
 function vendorDisplay(description: string): string {
+  // Some descriptions start with the service type: "GPU Service - Vendor Name"
+  // In that case, the vendor is the SECOND part.
+  const hyParts = description.split(' - ')
+  if (hyParts.length > 1 && hyParts[0].trim().split(' ').length <= 3 &&
+      /^(GPU|GPU Service|Fuel|Landing|Parking|Catering|Handling)/i.test(hyParts[0].trim())) {
+    // Vendor is the rest; recurse on it
+    return vendorDisplay(hyParts.slice(1).join(' - '))
+  }
+
   const parts = description.split(' – ')
   if (parts.length === 1) {
-    // No em-dash — fall back to splitting on ' - ' (regular hyphen)
     const hy = description.split(' - ')
-    return hy[0].trim()
+    return hy[hy.length - 1].trim() // last segment is the vendor
   }
   const first = parts[0].trim()
   const second = parts[1].trim()
-  // Keep the second segment only when it's a short identifier (airport code,
-  // name, destination) — NOT a sentence describing what was purchased
-  const mealOrDetail = /^(dinner|lunch|breakfast|brunch|meal|ride|room|hotel|stay|daily|rate|delivery|carry|order|service|charge|\d)/i
-  if (second.length <= 20 && !mealOrDetail.test(second)) {
+  // Keep the second segment only when it looks like a location identifier
+  // (airport code, short destination) — not a purchase description
+  const isPurchaseDetail = /^(dinner|lunch|breakfast|brunch|meal|ride|room|hotel|stay|daily|rate|delivery|carry|order|service|charge|infrastructure|overnight|security|facility|\d)/i
+  if (second.length <= 20 && !isPurchaseDetail.test(second)) {
     return `${first} – ${second}`
   }
   return first
+}
+
+// ─── Description: what was purchased ─────────────────────────────────────────
+// Uses notes (which have purchase detail) when meaningful; falls back to
+// extracting the detail segment from the description string.
+// "GPU Service - Newnan-Coweta County Airport FBO" → "GPU Service"
+// notes: "149 gal @ $3.69/gal = $549.17 + tax $5.11. Below $4/gal, no surcharge." → first sentence
+// notes: "Subtotal $28.47 + tax $1.71"                                             → fall back to description
+function detailDisplay(description: string, rawNotes: string): string {
+  // Clean notes: strip flight tag + invoice number refs, take first sentence
+  const notes = rawNotes
+    .replace(/\[flight:\w+\]\s*/g, '')
+    .replace(/\.\s*Invoice\s+[\w\-]+\.?/gi, '')
+    .split(/\.\s+/)[0]
+    .replace(/\.$/, '')
+    .trim()
+
+  // Notes that are purely accounting subtotals aren't useful purchase descriptions
+  const isAccounting = /^(subtotal|total|amount|balance)/i.test(notes)
+
+  if (notes && !isAccounting) {
+    return notes
+  }
+
+  // Fall back: extract detail from description (what comes after the vendor portion)
+  // First handle "GPU Service - Vendor Name" → detail is "GPU Service"
+  const hyParts = description.split(' - ')
+  if (hyParts.length > 1 && hyParts[0].trim().split(' ').length <= 3 &&
+      /^(GPU|GPU Service|Fuel|Landing|Parking|Catering|Handling)/i.test(hyParts[0].trim())) {
+    return hyParts[0].trim()
+  }
+
+  const parts = description.split(' – ')
+  if (parts.length <= 1) return ''
+
+  const vendorPartCount = vendorDisplay(description).split(' – ').length
+  const detailParts = parts.slice(vendorPartCount)
+  if (detailParts.length === 0) return ''
+
+  return detailParts[0]
+    .replace(/\.\s*Invoice\s+[\w\-]+\.?/gi, '')
+    .replace(/\.$/, '')
+    .trim()
 }
 
 function addDays(dateStr: string, days: number) {
@@ -236,7 +286,9 @@ function InvoicePage({
                   <tr key={line.id} className={`border-b border-gray-100 ${i % 2 !== 0 ? 'bg-gray-50/40' : 'bg-white'}`}>
                     <td className="px-10 py-3 text-gray-600 align-top whitespace-nowrap">{fmtShort(line.date)}</td>
                     <td className="px-3 py-3 font-semibold text-gray-800 align-top">{vendorDisplay(line.description)}</td>
-                    <td className="px-3 py-3 text-gray-600 align-top">{line.category}</td>
+                    <td className="px-3 py-3 text-gray-600 align-top">
+                      {detailDisplay(line.description, line.notes) || line.category}
+                    </td>
                     <td className="px-3 py-3 text-right text-gray-700 align-top">1</td>
                     <td className="px-3 py-3 text-right text-gray-700 align-top">{fmt(line.amount)}</td>
                     <td className="px-10 py-3 text-right font-semibold text-gray-900 align-top">{fmt(line.amount)}</td>
