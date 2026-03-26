@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import { FileText, ChevronRight, Fuel, ReceiptText, Printer } from 'lucide-react'
+import { FileText, ChevronRight, Fuel, ReceiptText, Printer, CalendarDays } from 'lucide-react'
 import Link from 'next/link'
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns'
 
@@ -94,6 +94,25 @@ export default async function InvoicesPage({ searchParams }: { searchParams: Sea
           </Link>
           <ChevronRight className="w-4 h-4 text-muted-foreground" />
           <h1 className="text-2xl font-bold text-foreground">Invoices</h1>
+        </div>
+        {/* Monthly invoice shortcut — current month and previous month */}
+        <div className="flex gap-2 flex-wrap">
+          {[0, 1].map(offset => {
+            const d = subMonths(new Date(), offset)
+            const m = format(d, 'yyyy-MM')
+            const label = offset === 0 ? 'This Month' : format(d, 'MMM yyyy')
+            return (
+              <Link
+                key={m}
+                href={`/dashboard/finance/invoices/monthly/${m}`}
+                target="_blank"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-colors"
+              >
+                <CalendarDays className="w-3.5 h-3.5" />
+                Monthly Invoice — {label}
+              </Link>
+            )
+          })}
         </div>
       </div>
 
