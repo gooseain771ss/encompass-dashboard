@@ -209,7 +209,7 @@ function InvoicePage({
 }) {
   const total = lines.reduce((s, l) => s + l.amount, 0)
   const today = new Date().toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
-  const dueDate = addDays(tripDate, 15)
+  const dueDate = addDays(today, 15)  // Net 15 from invoice date, not trip date
   const tripLabel = tripDate === tripDateEnd ? fmtShort(tripDate) : `${fmtShort(tripDate)} – ${fmtShort(tripDateEnd)}`
   const receipts = showReceipts ? dedupeReceipts(lines) : []
 

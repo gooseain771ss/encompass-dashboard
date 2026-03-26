@@ -212,8 +212,8 @@ export function Sidebar() {
         <NavContent />
       </aside>
 
-      {/* Mobile header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 h-14 bg-card border-b border-border">
+      {/* Mobile header — hidden on print */}
+      <div className="lg:hidden print:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 h-14 bg-card border-b border-border">
         <div className="flex items-center gap-2">
           <div className="flex items-center justify-center w-7 h-7 bg-primary/10 border border-primary/20 rounded-lg">
             <Plane className="w-4 h-4 text-primary" />
