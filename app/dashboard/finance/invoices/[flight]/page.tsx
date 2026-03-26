@@ -2,8 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { PrintableInvoice } from '@/components/invoice-print/printable-invoice'
 
-const INVOICE_A_CATEGORIES = ['fuel']
-const INVOICE_B_CATEGORIES = ['fuel_surcharge', 'fbo_fees', 'meals', 'maintenance', 'crew', 'catering', 'ground_transport', 'navigation', 'hangar', 'insurance', 'other']
+const INVOICE_A_CATEGORIES = ['fuel', 'maintenance']  // oil & aircraft maintenance billed to Slingshot
+const INVOICE_B_CATEGORIES = ['fuel_surcharge', 'fbo_fees', 'meals', 'crew', 'catering', 'ground_transport', 'navigation', 'hangar', 'insurance', 'other']
 
 const categoryLabels: Record<string, string> = {
   fuel: 'Fuel (Base Rate)',

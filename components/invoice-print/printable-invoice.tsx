@@ -85,11 +85,12 @@ function vendorDisplay(description: string): string {
 // notes: "149 gal @ $3.69/gal = $549.17 + tax $5.11. Below $4/gal, no surcharge." → first sentence
 // notes: "Subtotal $28.47 + tax $1.71"                                             → fall back to description
 function detailDisplay(description: string, rawNotes: string): string {
-  // Clean notes: strip flight tag + invoice number refs, take first sentence
+  // Clean notes: strip flight tag + invoice number refs, keep up to 2 sentences
+  // (2 sentences needed for fuel entries: "X gal @ $Y/gal. Surcharge above $4.00/gal = $Z + tax")
   const notes = rawNotes
     .replace(/\[flight:\w+\]\s*/g, '')
     .replace(/\.\s*Invoice\s+[\w\-]+\.?/gi, '')
-    .split(/\.\s+/)[0]
+    .split(/\.\s+/).slice(0, 2).join('. ')
     .replace(/\.$/, '')
     .trim()
 
