@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { Printer, ArrowLeft, FileText } from 'lucide-react'
 import Link from 'next/link'
 
@@ -94,9 +94,11 @@ function ReceiptPages({ receipts }: { receipts: { url: string; label: string; is
           ) : (
             <div className="p-6">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={r.url} alt={`Receipt: ${r.label}`}
-                className="w-full h-auto object-contain max-h-[960px] print:max-h-none"
-                style={{ display: 'block' }}
+              <img
+                src={r.url}
+                alt={`Receipt: ${r.label}`}
+                className="w-full h-auto object-contain"
+                style={{ display: 'block', maxHeight: 'none' }}
               />
             </div>
           )}
@@ -144,7 +146,6 @@ function InvoicePage({
       >
         {/* ── Top header ── */}
         <div className="flex items-start justify-between px-10 pt-10 pb-6">
-          {/* Left: INVOICE + company info */}
           <div>
             <p className="text-3xl font-extrabold tracking-widest text-gray-900 mb-4">INVOICE</p>
             <p className="text-sm font-bold text-gray-800">Encompass Aviation Inc</p>
@@ -154,7 +155,6 @@ function InvoicePage({
             <p className="text-xs text-gray-500">+1 (330) 749-4279</p>
             <p className="text-xs text-gray-500">www.flyencompass.com</p>
           </div>
-          {/* Right: Logo */}
           <div className="text-right">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -170,7 +170,6 @@ function InvoicePage({
 
         {/* ── Bill To + Invoice Details ── */}
         <div className="bg-gray-50 mx-0 px-10 py-5 grid grid-cols-2 gap-8">
-          {/* Bill To */}
           <div>
             <p className="text-xs font-bold text-gray-700 mb-1">Bill to</p>
             <p className="text-sm font-semibold text-gray-800">{billTo.name}</p>
@@ -178,7 +177,6 @@ function InvoicePage({
               <p key={i} className="text-sm text-gray-600">{line}</p>
             ))}
           </div>
-          {/* Invoice details */}
           <div>
             <p className="text-xs font-bold text-gray-700 mb-2">Invoice details</p>
             <div className="space-y-0.5 text-sm">
@@ -247,7 +245,6 @@ function InvoicePage({
                   </tr>
                 ))
               )}
-              {/* Total row */}
               <tr className="border-t-2 border-gray-800">
                 <td colSpan={5} className="px-10 py-4 text-right text-sm font-bold text-gray-700 uppercase tracking-wide">Total</td>
                 <td className="px-10 py-4 text-right text-xl font-extrabold text-gray-900">{fmt(total)}</td>
@@ -258,7 +255,6 @@ function InvoicePage({
 
         {/* ── Payment + Note ── */}
         <div className="px-10 py-8 grid grid-cols-2 gap-10">
-          {/* Ways to pay */}
           <div>
             <p className="text-lg font-bold text-gray-900 mb-3">Ways to pay</p>
             <div className="flex items-start gap-3">
@@ -270,7 +266,6 @@ function InvoicePage({
               </div>
             </div>
           </div>
-          {/* Note to customer */}
           <div>
             <p className="text-lg font-bold text-gray-900 mb-3">Note to customer</p>
             <p className="text-sm text-gray-600">
@@ -303,19 +298,47 @@ function InvoicePage({
 // ─── Main exported component ──────────────────────────────────────────────────
 export function PrintableInvoice({ data }: { data: InvoiceData }) {
   const [showReceipts, setShowReceipts] = useState(true)
+  // 'all' | 'A' | 'B' — controls which invoice section renders during print
+  const [printMode, setPrintMode] = useState<'all' | 'A' | 'B'>('all')
 
   const totalA = data.invoiceALines.reduce((s, l) => s + l.amount, 0)
   const totalB = data.invoiceBLines.reduce((s, l) => s + l.amount, 0)
   const receiptCountA = dedupeReceipts(data.invoiceALines).length
   const receiptCountB = dedupeReceipts(data.invoiceBLines).length
 
+  const triggerPrint = useCallback((mode: 'all' | 'A' | 'B') => {
+    setPrintMode(mode)
+    // Double rAF ensures React has flushed state + browser has re-rendered
+    // before the print dialog opens
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        window.print()
+        // Reset after print dialog closes (slight delay for safety)
+        setTimeout(() => setPrintMode('all'), 500)
+      })
+    })
+  }, [])
+
   return (
     <>
       <style>{`
         @media print {
           .no-print { display: none !important; }
+          /* Fix: ensure full page height is printable, not just visible viewport */
+          html, body {
+            height: auto !important;
+            overflow: visible !important;
+            position: static !important;
+          }
           body { background: white !important; }
-          .invoice-page, .receipt-page { box-shadow: none !important; margin: 0 !important; }
+          .invoice-page, .receipt-page {
+            box-shadow: none !important;
+            margin: 0 !important;
+          }
+          /* Hide Invoice B section when printing A-only */
+          .print-section-B.hide-on-print { display: none !important; }
+          /* Hide Invoice A section when printing B-only */
+          .print-section-A.hide-on-print { display: none !important; }
         }
         @page { margin: 0; size: letter; }
       `}</style>
@@ -342,41 +365,78 @@ export function PrintableInvoice({ data }: { data: InvoiceData }) {
               className="w-4 h-4 accent-primary"
             />
             Include receipts
-            <span className="text-xs text-muted-foreground/60">({receiptCountA + receiptCountB} imgs)</span>
+            <span className="text-xs text-muted-foreground/60">
+              ({receiptCountA + receiptCountB} imgs)
+            </span>
           </label>
-          <button onClick={() => window.print()} className="btn-primary flex items-center gap-2">
+
+          {/* Slingshot-only print */}
+          <button
+            onClick={() => triggerPrint('A')}
+            className="btn-primary flex items-center gap-2 bg-sky-700 hover:bg-sky-800"
+            title="Print Invoice A + receipts — billed to SlingShot 100 LLC"
+          >
             <Printer className="w-4 h-4" />
-            Print / Save PDF
+            Slingshot PDF
+          </button>
+
+          {/* Care Charter-only print */}
+          <button
+            onClick={() => triggerPrint('B')}
+            className="btn-primary flex items-center gap-2 bg-emerald-700 hover:bg-emerald-800"
+            title="Print Invoice B + receipts — billed to Cape Air Charter"
+          >
+            <Printer className="w-4 h-4" />
+            Care Charter PDF
+          </button>
+
+          {/* Print both */}
+          <button
+            onClick={() => triggerPrint('all')}
+            className="btn-primary flex items-center gap-2"
+            title="Print both invoices with all receipts"
+          >
+            <Printer className="w-4 h-4" />
+            Print All
           </button>
         </div>
       </div>
 
       {/* Invoice pages */}
       <div className="bg-gray-300 min-h-screen py-8 px-4 print:bg-white print:p-0">
-        <InvoicePage
-          invoiceNumber={`${data.flightNumber}-A`}
-          title="Invoice A — Fuel Base Cost"
-          lines={data.invoiceALines}
-          billTo={BILL_TO_A}
-          flightNumber={data.flightNumber}
-          aircraft={data.aircraft}
-          tripDate={data.tripDate}
-          tripDateEnd={data.tripDateEnd}
-          showReceipts={showReceipts}
-          pageBreak={false}
-        />
-        <InvoicePage
-          invoiceNumber={`${data.flightNumber}-B`}
-          title="Invoice B — Operating Expenses"
-          lines={data.invoiceBLines}
-          billTo={BILL_TO_B}
-          flightNumber={data.flightNumber}
-          aircraft={data.aircraft}
-          tripDate={data.tripDate}
-          tripDateEnd={data.tripDateEnd}
-          showReceipts={showReceipts}
-          pageBreak={true}
-        />
+
+        {/* Invoice A — SlingShot */}
+        <div className={`print-section-A${printMode === 'B' ? ' hide-on-print' : ''}`}>
+          <InvoicePage
+            invoiceNumber={`${data.flightNumber}-A`}
+            title="Invoice A — Fuel Base Cost"
+            lines={data.invoiceALines}
+            billTo={BILL_TO_A}
+            flightNumber={data.flightNumber}
+            aircraft={data.aircraft}
+            tripDate={data.tripDate}
+            tripDateEnd={data.tripDateEnd}
+            showReceipts={showReceipts}
+            pageBreak={false}
+          />
+        </div>
+
+        {/* Invoice B — Care Charter */}
+        <div className={`print-section-B${printMode === 'A' ? ' hide-on-print' : ''}`}>
+          <InvoicePage
+            invoiceNumber={`${data.flightNumber}-B`}
+            title="Invoice B — Operating Expenses"
+            lines={data.invoiceBLines}
+            billTo={BILL_TO_B}
+            flightNumber={data.flightNumber}
+            aircraft={data.aircraft}
+            tripDate={data.tripDate}
+            tripDateEnd={data.tripDateEnd}
+            showReceipts={showReceipts}
+            pageBreak={printMode !== 'B'} // no forced page break if B is the only thing printing
+          />
+        </div>
+
       </div>
     </>
   )
