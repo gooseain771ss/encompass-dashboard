@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { Printer, ArrowLeft, FileText } from 'lucide-react'
 import Link from 'next/link'
 
@@ -300,6 +300,49 @@ export function PrintableInvoice({ data }: { data: InvoiceData }) {
   const [showReceipts, setShowReceipts] = useState(true)
   // 'all' | 'A' | 'B' — controls which invoice section renders during print
   const [printMode, setPrintMode] = useState<'all' | 'A' | 'B'>('all')
+
+  // Fix: dashboard layout has overflow-hidden/overflow-y-auto containers that
+  // clip the print output to just the visible viewport. We use beforeprint/afterprint
+  // events to temporarily disable all overflow constraints, then restore them.
+  useEffect(() => {
+    function beforePrint() {
+      document.querySelectorAll<HTMLElement>('*').forEach(el => {
+        const style = window.getComputedStyle(el)
+        const ov = style.overflow
+        const ovY = style.overflowY
+        const h = style.height
+        if (
+          ov === 'hidden' || ov === 'auto' || ov === 'scroll' ||
+          ovY === 'auto' || ovY === 'scroll' || ovY === 'hidden'
+        ) {
+          el.dataset.printOverflow = el.style.overflow
+          el.dataset.printOverflowY = el.style.overflowY
+          el.dataset.printHeight = el.style.height
+          el.style.overflow = 'visible'
+          el.style.overflowY = 'visible'
+          el.style.height = 'auto'
+        }
+      })
+    }
+
+    function afterPrint() {
+      document.querySelectorAll<HTMLElement>('[data-print-overflow]').forEach(el => {
+        el.style.overflow = el.dataset.printOverflow ?? ''
+        el.style.overflowY = el.dataset.printOverflowY ?? ''
+        el.style.height = el.dataset.printHeight ?? ''
+        delete el.dataset.printOverflow
+        delete el.dataset.printOverflowY
+        delete el.dataset.printHeight
+      })
+    }
+
+    window.addEventListener('beforeprint', beforePrint)
+    window.addEventListener('afterprint', afterPrint)
+    return () => {
+      window.removeEventListener('beforeprint', beforePrint)
+      window.removeEventListener('afterprint', afterPrint)
+    }
+  }, [])
 
   const totalA = data.invoiceALines.reduce((s, l) => s + l.amount, 0)
   const totalB = data.invoiceBLines.reduce((s, l) => s + l.amount, 0)
