@@ -221,7 +221,7 @@ function InvoicePage({
       >
 
         {/* ── Company Header ── */}
-        <div className="flex items-center justify-between px-10 pt-7 pb-5">
+        <div className="flex items-center justify-between px-10 pt-10 pb-5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/encompass-logo.png" alt="Encompass Aviation" className="h-14 object-contain" />
           <div className="text-right">
@@ -406,9 +406,9 @@ export function PrintableInvoice({ data }: { data: InvoiceData }) {
           }
 
           /* Receipt pages: fixed to exactly one printed page */
-          /* Top margin 0.65in + bottom 0.4in = 1.05in total vertical margin → 11in - 1.05in = 9.95in */
+          /* @page margin is 0, so full letter height = 11in */
           .receipt-page {
-            height: 9.95in !important;
+            height: 11in !important;
             overflow: hidden !important;
             display: flex !important;
             flex-direction: column !important;
@@ -454,7 +454,7 @@ export function PrintableInvoice({ data }: { data: InvoiceData }) {
           .print-section-B.hide-on-print { display: none !important; }
           .print-section-A.hide-on-print { display: none !important; }
         }
-        @page { margin: 0.65in 0.4in 0.4in 0.4in; size: letter; }
+        @page { margin: 0; size: letter; }
       `}</style>
 
       {/* Controls bar — hidden on print */}
