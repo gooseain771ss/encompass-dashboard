@@ -220,6 +220,19 @@ function InvoicePage({
         style={pageBreak ? ({ breakBefore: 'page', pageBreakBefore: 'always' } as React.CSSProperties) : {}}
       >
 
+        {/* ── Company Header ── */}
+        <div className="flex items-center justify-between px-10 pt-7 pb-5">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/encompass-logo.png" alt="Encompass Aviation" className="h-14 object-contain" />
+          <div className="text-right">
+            <p className="text-sm font-bold text-gray-900">Encompass Aviation Inc</p>
+            <p className="text-xs text-gray-500">121 Green Park Way · Newnan, GA 30263</p>
+            <p className="text-xs text-gray-500">scott@flyencompass.com · (330) 749-4279</p>
+            <p className="text-xs text-gray-500">flyencompass.com</p>
+          </div>
+        </div>
+        <div className="mx-10 border-t border-gray-200 mb-0" />
+
         {/* ── Bill To + Invoice Details ── */}
         <div className="bg-gray-50 mx-0 px-10 py-5 grid grid-cols-2 gap-8">
           <div>
@@ -392,10 +405,10 @@ export function PrintableInvoice({ data }: { data: InvoiceData }) {
             max-width: 100% !important;
           }
 
-          /* Receipt pages: fixed to exactly one printed page (11in - 0.8in margins = 10.2in) */
-          /* This prevents the browser from ever splitting header + image across pages */
+          /* Receipt pages: fixed to exactly one printed page */
+          /* Top margin 0.65in + bottom 0.4in = 1.05in total vertical margin → 11in - 1.05in = 9.95in */
           .receipt-page {
-            height: 10.2in !important;
+            height: 9.95in !important;
             overflow: hidden !important;
             display: flex !important;
             flex-direction: column !important;
@@ -441,7 +454,7 @@ export function PrintableInvoice({ data }: { data: InvoiceData }) {
           .print-section-B.hide-on-print { display: none !important; }
           .print-section-A.hide-on-print { display: none !important; }
         }
-        @page { margin: 0.4in; size: letter; }
+        @page { margin: 0.65in 0.4in 0.4in 0.4in; size: letter; }
       `}</style>
 
       {/* Controls bar — hidden on print */}
