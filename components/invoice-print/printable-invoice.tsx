@@ -46,6 +46,31 @@ function fmtShort(d: string) {
     month: 'short', day: 'numeric', year: 'numeric',
   })
 }
+
+// Extracts just the company name (+ short location code if present) from a
+// verbose description string. Examples:
+//   "Signature Aviation – SAV – Infrastructure Fee..." → "Signature Aviation – SAV"
+//   "Chick-fil-A Coastland Center – Dinner w/Ed – ..." → "Chick-fil-A Coastland Center"
+//   "Uber – CCO to Home – Rideshare..." → "Uber – CCO to Home"
+//   "Pilot Pay – Scott Nussbaum – Daily rate 3 days" → "Pilot Pay – Scott Nussbaum"
+function vendorDisplay(description: string): string {
+  const parts = description.split(' – ')
+  if (parts.length === 1) {
+    // No em-dash — fall back to splitting on ' - ' (regular hyphen)
+    const hy = description.split(' - ')
+    return hy[0].trim()
+  }
+  const first = parts[0].trim()
+  const second = parts[1].trim()
+  // Keep the second segment only when it's a short identifier (airport code,
+  // name, destination) — NOT a sentence describing what was purchased
+  const mealOrDetail = /^(dinner|lunch|breakfast|brunch|meal|ride|room|hotel|stay|daily|rate|delivery|carry|order|service|charge|\d)/i
+  if (second.length <= 20 && !mealOrDetail.test(second)) {
+    return `${first} – ${second}`
+  }
+  return first
+}
+
 function addDays(dateStr: string, days: number) {
   const d = new Date(dateStr + 'T00:00:00')
   d.setDate(d.getDate() + days)
@@ -143,29 +168,6 @@ function InvoicePage({
         className="invoice-page bg-white max-w-[816px] mx-auto mb-8 print:mb-0 shadow-xl print:shadow-none"
         style={pageBreak ? ({ breakBefore: 'page', pageBreakBefore: 'always' } as React.CSSProperties) : {}}
       >
-        {/* ── Top header ── */}
-        <div className="flex items-start justify-between px-10 pt-10 pb-6">
-          <div>
-            <p className="text-3xl font-extrabold tracking-widest text-gray-900 mb-4">INVOICE</p>
-            <p className="text-sm font-bold text-gray-800">Encompass Aviation Inc</p>
-            <p className="text-xs text-gray-500">121 Green Park Way</p>
-            <p className="text-xs text-gray-500">Newnan, GA 30263-6288</p>
-            <p className="text-xs text-gray-500 mt-1">scott@flyencompass.com</p>
-            <p className="text-xs text-gray-500">+1 (330) 749-4279</p>
-            <p className="text-xs text-gray-500">www.flyencompass.com</p>
-          </div>
-          <div className="text-right">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/encompass-logo.png"
-              alt="Encompass Aviation"
-              className="h-16 object-contain ml-auto"
-            />
-          </div>
-        </div>
-
-        {/* ── Dashed divider ── */}
-        <div className="mx-10 border-t border-dashed border-gray-300 mb-0" />
 
         {/* ── Bill To + Invoice Details ── */}
         <div className="bg-gray-50 mx-0 px-10 py-5 grid grid-cols-2 gap-8">
@@ -233,11 +235,8 @@ function InvoicePage({
                 lines.map((line, i) => (
                   <tr key={line.id} className={`border-b border-gray-100 ${i % 2 !== 0 ? 'bg-gray-50/40' : 'bg-white'}`}>
                     <td className="px-10 py-3 text-gray-600 align-top whitespace-nowrap">{fmtShort(line.date)}</td>
-                    <td className="px-3 py-3 font-semibold text-gray-800 align-top">{line.description}</td>
-                    <td className="px-3 py-3 text-gray-600 align-top">
-                      <div>{line.category}</div>
-                      {line.notes && <div className="text-xs text-gray-400 mt-0.5">{line.notes}</div>}
-                    </td>
+                    <td className="px-3 py-3 font-semibold text-gray-800 align-top">{vendorDisplay(line.description)}</td>
+                    <td className="px-3 py-3 text-gray-600 align-top">{line.category}</td>
                     <td className="px-3 py-3 text-right text-gray-700 align-top">1</td>
                     <td className="px-3 py-3 text-right text-gray-700 align-top">{fmt(line.amount)}</td>
                     <td className="px-10 py-3 text-right font-semibold text-gray-900 align-top">{fmt(line.amount)}</td>
