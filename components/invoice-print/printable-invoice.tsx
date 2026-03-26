@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback } from 'react'
 import { Printer, ArrowLeft, FileText } from 'lucide-react'
 import Link from 'next/link'
 
@@ -301,49 +301,6 @@ export function PrintableInvoice({ data }: { data: InvoiceData }) {
   // 'all' | 'A' | 'B' — controls which invoice section renders during print
   const [printMode, setPrintMode] = useState<'all' | 'A' | 'B'>('all')
 
-  // Fix: dashboard layout has overflow-hidden/overflow-y-auto containers that
-  // clip the print output to just the visible viewport. We use beforeprint/afterprint
-  // events to temporarily disable all overflow constraints, then restore them.
-  useEffect(() => {
-    function beforePrint() {
-      document.querySelectorAll<HTMLElement>('*').forEach(el => {
-        const style = window.getComputedStyle(el)
-        const ov = style.overflow
-        const ovY = style.overflowY
-        const h = style.height
-        if (
-          ov === 'hidden' || ov === 'auto' || ov === 'scroll' ||
-          ovY === 'auto' || ovY === 'scroll' || ovY === 'hidden'
-        ) {
-          el.dataset.printOverflow = el.style.overflow
-          el.dataset.printOverflowY = el.style.overflowY
-          el.dataset.printHeight = el.style.height
-          el.style.overflow = 'visible'
-          el.style.overflowY = 'visible'
-          el.style.height = 'auto'
-        }
-      })
-    }
-
-    function afterPrint() {
-      document.querySelectorAll<HTMLElement>('[data-print-overflow]').forEach(el => {
-        el.style.overflow = el.dataset.printOverflow ?? ''
-        el.style.overflowY = el.dataset.printOverflowY ?? ''
-        el.style.height = el.dataset.printHeight ?? ''
-        delete el.dataset.printOverflow
-        delete el.dataset.printOverflowY
-        delete el.dataset.printHeight
-      })
-    }
-
-    window.addEventListener('beforeprint', beforePrint)
-    window.addEventListener('afterprint', afterPrint)
-    return () => {
-      window.removeEventListener('beforeprint', beforePrint)
-      window.removeEventListener('afterprint', afterPrint)
-    }
-  }, [])
-
   const totalA = data.invoiceALines.reduce((s, l) => s + l.amount, 0)
   const totalB = data.invoiceBLines.reduce((s, l) => s + l.amount, 0)
   const receiptCountA = dedupeReceipts(data.invoiceALines).length
@@ -366,24 +323,44 @@ export function PrintableInvoice({ data }: { data: InvoiceData }) {
     <>
       <style>{`
         @media print {
+          /* Hide all dashboard chrome — sidebar, nav, top bar, controls */
           .no-print { display: none !important; }
-          /* Fix: ensure full page height is printable, not just visible viewport */
+          aside { display: none !important; }
+
+          /* Reset page layout so full content prints, not just viewport */
           html, body {
             height: auto !important;
             overflow: visible !important;
-            position: static !important;
+            background: white !important;
           }
-          body { background: white !important; }
+
+          /* Receipt images: fit to one page, no overflow */
+          .receipt-page img {
+            max-height: 9in !important;
+            width: auto !important;
+            max-width: 100% !important;
+            display: block !important;
+          }
+
+          /* Remove decorative backgrounds and shadows */
           .invoice-page, .receipt-page {
             box-shadow: none !important;
             margin: 0 !important;
           }
+
+          /* Outer gray wrapper: remove min-height so it doesn't pad blank pages */
+          .invoice-print-wrapper {
+            background: white !important;
+            min-height: 0 !important;
+            padding: 0 !important;
+          }
+
           /* Hide Invoice B section when printing A-only */
           .print-section-B.hide-on-print { display: none !important; }
           /* Hide Invoice A section when printing B-only */
           .print-section-A.hide-on-print { display: none !important; }
         }
-        @page { margin: 0; size: letter; }
+        @page { margin: 0.4in; size: letter; }
       `}</style>
 
       {/* Controls bar — hidden on print */}
@@ -423,14 +400,14 @@ export function PrintableInvoice({ data }: { data: InvoiceData }) {
             Slingshot PDF
           </button>
 
-          {/* Care Charter-only print */}
+          {/* Cape Air Charter-only print */}
           <button
             onClick={() => triggerPrint('B')}
             className="btn-primary flex items-center gap-2 bg-emerald-700 hover:bg-emerald-800"
             title="Print Invoice B + receipts — billed to Cape Air Charter"
           >
             <Printer className="w-4 h-4" />
-            Care Charter PDF
+            Cape Air Charter PDF
           </button>
 
           {/* Print both */}
@@ -446,7 +423,7 @@ export function PrintableInvoice({ data }: { data: InvoiceData }) {
       </div>
 
       {/* Invoice pages */}
-      <div className="bg-gray-300 min-h-screen py-8 px-4 print:bg-white print:p-0">
+      <div className="invoice-print-wrapper bg-gray-300 min-h-screen py-8 px-4 print:bg-white print:p-0">
 
         {/* Invoice A — SlingShot */}
         <div className={`print-section-A${printMode === 'B' ? ' hide-on-print' : ''}`}>
