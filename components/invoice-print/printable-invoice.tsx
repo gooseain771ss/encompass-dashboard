@@ -75,9 +75,13 @@ function ReceiptPages({ receipts }: { receipts: { url: string; label: string; is
         <div
           key={r.url}
           className="receipt-page bg-white max-w-[816px] mx-auto mb-8 print:mb-0 shadow-xl print:shadow-none"
-          style={{ breakBefore: 'page', pageBreakBefore: 'always' } as React.CSSProperties}
+          style={{ breakBefore: 'page', pageBreakBefore: 'always', breakInside: 'avoid', pageBreakInside: 'avoid' } as React.CSSProperties}
         >
-          <div className="flex items-center justify-between px-10 py-4 border-b border-gray-200">
+          {/* breakAfter:avoid keeps this header glued to the image below it */}
+          <div
+            className="flex items-center justify-between px-10 py-4 border-b border-gray-200"
+            style={{ breakAfter: 'avoid', pageBreakAfter: 'avoid' } as React.CSSProperties}
+          >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/encompass-logo.png" alt="Encompass Aviation" className="h-10 object-contain" />
             <div className="text-right">
@@ -86,13 +90,19 @@ function ReceiptPages({ receipts }: { receipts: { url: string; label: string; is
             </div>
           </div>
           {r.isPdf ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center px-8">
+            <div
+              className="flex flex-col items-center justify-center py-16 text-center px-8"
+              style={{ breakBefore: 'avoid', pageBreakBefore: 'avoid' } as React.CSSProperties}
+            >
               <FileText className="w-12 h-12 text-gray-300 mb-3" />
               <p className="text-sm font-medium text-gray-600">PDF Receipt — {r.label}</p>
               <a href={r.url} target="_blank" className="mt-3 text-xs text-sky-600 hover:underline no-print">Open PDF ↗</a>
             </div>
           ) : (
-            <div className="p-6">
+            <div
+              className="p-6"
+              style={{ breakBefore: 'avoid', pageBreakBefore: 'avoid' } as React.CSSProperties}
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={r.url}
@@ -254,7 +264,7 @@ function InvoicePage({
         </div>
 
         {/* ── Payment + Note ── */}
-        <div className="px-10 py-8 grid grid-cols-2 gap-10">
+        <div className="px-10 py-8 grid grid-cols-2 gap-10" style={{ breakInside: 'avoid', pageBreakInside: 'avoid', breakBefore: 'avoid', pageBreakBefore: 'avoid' } as React.CSSProperties}>
           <div>
             <p className="text-lg font-bold text-gray-900 mb-3">Ways to pay</p>
             <div className="flex items-start gap-3">
@@ -282,7 +292,7 @@ function InvoicePage({
         </div>
 
         {/* ── Footer ── */}
-        <div className="border-t border-gray-200 mx-10 pb-8 pt-4">
+        <div className="border-t border-gray-200 mx-10 pb-8 pt-4" style={{ breakInside: 'avoid', pageBreakInside: 'avoid', breakBefore: 'avoid', pageBreakBefore: 'avoid' } as React.CSSProperties}>
           <p className="text-xs text-gray-400 text-center">
             Encompass Aviation Inc · 121 Green Park Way, Newnan, GA 30263-6288 · scott@flyencompass.com · +1 (330) 749-4279
           </p>
